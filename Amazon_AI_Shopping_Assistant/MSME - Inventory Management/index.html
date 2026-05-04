@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon AI Shopping Assistant</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Authentication View -->
+    <div id="auth-view" class="auth-view">
+        <div class="auth-logo">
+            <i class="fa-brands fa-amazon"></i>
+        </div>
+        <!-- Sign In Card -->
+        <div class="auth-card" id="signin-card">
+            <h2>Sign in</h2>
+            <form onsubmit="handleLogin(event)">
+                <div class="auth-group">
+                    <label>Your Name</label>
+                    <input type="text" id="auth-name-signin" required placeholder="e.g. John Doe">
+                </div>
+                <div class="auth-group">
+                    <label>Email or mobile phone number</label>
+                    <input type="text" required>
+                </div>
+                <div class="auth-group">
+                    <label>Password</label>
+                    <input type="password" required>
+                </div>
+                <button type="submit" class="auth-submit-btn">Continue</button>
+            </form>
+            <p class="auth-legal">By continuing, you agree to Amazon's Conditions of Use and Privacy Notice.</p>
+            
+            <div class="auth-divider">
+                <h5>New to Amazon?</h5>
+            </div>
+            
+            <button class="auth-create-btn" onclick="toggleAuthMode('signup')">Create your Amazon account</button>
+        </div>
+
+        <!-- Sign Up Card -->
+        <div class="auth-card" id="signup-card" style="display: none;">
+            <h2>Create account</h2>
+            <form onsubmit="handleSignup(event)">
+                <div class="auth-group">
+                    <label>Your name</label>
+                    <input type="text" id="auth-name-signup" required placeholder="First and last name">
+                </div>
+                <div class="auth-group">
+                    <label>Mobile number or email</label>
+                    <input type="text" required>
+                </div>
+                <div class="auth-group">
+                    <label>Password</label>
+                    <input type="password" required placeholder="At least 6 characters">
+                </div>
+                <div class="auth-group">
+                    <label>Re-enter password</label>
+                    <input type="password" required>
+                </div>
+                <button type="submit" class="auth-submit-btn">Verify email</button>
+            </form>
+            <p class="auth-legal">By creating an account, you agree to Amazon's Conditions of Use and Privacy Notice.</p>
+            
+            <div class="auth-divider">
+                <h5>Already have an account?</h5>
+            </div>
+            
+            <button class="auth-create-btn" onclick="toggleAuthMode('signin')">Sign in instead</button>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container" id="app-container" style="display: none;">
+        
+        <!-- Header -->
+        <header class="header">
+            <div class="header-title">
+                <i class="fa-brands fa-amazon" style="font-size: 1.8rem; margin-right: 8px;"></i>
+                Shopping Assistant
+            </div>
+            <button id="checkout-btn" class="checkout-btn" onclick="toggleCart()">
+                <i class="fa-solid fa-cart-shopping"></i> <span id="cart-count">0</span> Cart
+            </button>
+        </header>
+
+        <!-- Cart Overlay -->
+        <div id="cart-overlay" class="cart-overlay" style="display: none;">
+            <div class="cart-modal">
+                <div class="cart-header">
+                    <h2>Your Bundle</h2>
+                    <button class="close-btn" onclick="toggleCart()"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="cart-items" class="cart-items">
+                    <!-- Cart items go here -->
+                </div>
+                <div class="cart-footer">
+                    <div class="cart-total">Total: $<span id="cart-total-price">0.00</span></div>
+                    <button class="checkout-submit-btn" onclick="goToCheckout()">Proceed to Checkout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout View -->
+        <div id="checkout-view" class="checkout-view" style="display: none;">
+            <div class="checkout-container">
+                <div class="checkout-header">
+                    <button class="back-btn" onclick="backToChat()"><i class="fa-solid fa-arrow-left"></i> Back to Chat</button>
+                    <h2>Secure Checkout</h2>
+                </div>
+                
+                <div class="checkout-content">
+                    <div class="checkout-form">
+                        <h3>Shipping Information</h3>
+                        <div class="form-group">
+                            <input type="text" placeholder="Full Name" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="tel" id="checkout-phone" placeholder="WhatsApp Number (e.g. 14155552671)" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="text" placeholder="Address" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><input type="text" placeholder="City" required></div>
+                            <div class="form-group"><input type="text" placeholder="Zip Code" required></div>
+                        </div>
+
+                        <h3 style="margin-top: 24px;">Payment Method</h3>
+                        <div class="form-group">
+                            <input type="text" placeholder="Card Number (e.g. 4242...)" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group"><input type="text" placeholder="MM/YY" required></div>
+                            <div class="form-group"><input type="text" placeholder="CVC" required></div>
+                        </div>
+                        
+                        <button class="pay-btn" onclick="processPayment()">Pay $<span id="checkout-total-btn">0.00</span> Now</button>
+                    </div>
+
+                    <div class="order-summary">
+                        <h3>Order Summary</h3>
+                        <div id="checkout-summary-items" class="summary-items"></div>
+                        <div class="summary-total">Total: $<span id="checkout-summary-total">0.00</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success View -->
+        <div id="success-view" class="success-view" style="display: none;">
+            <div class="success-container">
+                <div class="success-icon"><i class="fa-solid fa-circle-check"></i></div>
+                <h2>Payment Successful!</h2>
+                <p>Your order has been placed and a WhatsApp confirmation has been initiated.</p>
+                <button class="back-btn primary" onclick="resetApp()">Start New Session</button>
+            </div>
+        </div>
+
+        <!-- Quick View Modal -->
+        <div id="quick-view-overlay" class="cart-overlay" style="display: none;">
+            <div class="quick-view-modal">
+                <button class="close-btn" onclick="closeQuickView()" style="position: absolute; right: 16px; top: 16px;"><i class="fa-solid fa-xmark"></i></button>
+                <div class="qv-content">
+                    <img id="qv-image" src="" alt="Product Image">
+                    <div class="qv-details">
+                        <h2 id="qv-title">Product Name</h2>
+                        <div id="qv-price" class="qv-price">$0.00</div>
+                        <p id="qv-desc" class="qv-desc">Product description goes here.</p>
+                        
+                        <div class="qv-sizes">
+                            <label>Select Size:</label>
+                            <div class="size-options">
+                                <button class="size-btn" onclick="selectSize('S')">S</button>
+                                <button class="size-btn" onclick="selectSize('M')">M</button>
+                                <button class="size-btn" onclick="selectSize('L')">L</button>
+                                <button class="size-btn" onclick="selectSize('XL')">XL</button>
+                            </div>
+                        </div>
+                        
+                        <button id="qv-add-btn" class="add-btn" style="margin-top: auto; padding: 12px; font-size: 1.1rem;">
+                            Add to Cart
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <main class="chat-container" id="chat-container">
+            <!-- Initial Greeting will be injected via JS after login -->
+        </main>
+
+        <!-- Input Area -->
+        <footer class="input-area">
+            <form id="chat-form" class="input-wrapper">
+                <input 
+                    type="text" 
+                    id="intent-input" 
+                    class="intent-input" 
+                    placeholder="Describe your occasion, vibe, or who it's for..." 
+                    autocomplete="off"
+                    required
+                >
+                <button type="submit" class="send-btn">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </form>
+        </footer>
+    </div>
+
+    <!-- Load Data and Logic -->
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="catalog.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
