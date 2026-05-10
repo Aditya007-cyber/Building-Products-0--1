@@ -1,85 +1,90 @@
-# Product Teardown: Amazon AI Shopping Assistant
+# Product Requirements Document (PRD): Amazon AI Shopping Assistant
 
-## 1. Executive Summary
-The **Amazon AI Shopping Assistant** is a conversational commerce platform designed to transition users from a traditional "search-and-filter" paradigm to an **intent-driven, curated discovery experience**. By leveraging natural language processing (simulated via our intent engine) and dynamic inventory fetching, the product acts as a personalized stylist and personal shopper, significantly reducing cognitive load and time-to-discovery for the end-user.
+## 1. Product Overview & Vision
+**Product Name**: Amazon AI Shopping Assistant
+**Vision**: To transform the e-commerce search experience from keyword-based browsing to intent-driven conversation. The assistant acts as a personal digital stylist, understanding occasions, vibes, and complex queries to instantly curate and suggest complete, cohesive product bundles (e.g., "A relaxed outfit for my Goa trip" or "Formal attire for an office meeting").
 
----
+## 2. Problem Statement
+Modern e-commerce requires users to know exactly what they are looking for (e.g., "blue polo shirt men"). When shoppers need inspiration for an event, a gift, or a specific vibe, they are forced to manually browse multiple categories, evaluate matching items, and assemble looks themselves. This leads to decision fatigue and cart abandonment. 
 
-## 2. Feature Analysis & Teardown
+## 3. Current State Teardown (Prototype)
+The current vanilla JavaScript prototype successfully demonstrates the core user experience:
+- **Chat Interface**: A WhatsApp-like chat UI where users can input natural language requests or select suggested chips.
+- **Mock Intent Parser**: Uses keyword/regex matching (`goa`, `winter`, `gift`) to categorize intent into a specific "vibe" and target gender.
+- **Bundle Generation**: Filters a static/dynamic catalog (partially populated by FakeStoreAPI) to present a cohesive bundle of items (e.g., ensuring a mix of different product types).
+- **Cart & Quick View**: Users can view item details, select sizes, and add individual items or the *entire bundle* to their cart.
+- **Mock Checkout & WhatsApp Hand-off**: A dummy secure checkout form that calculates totals and initiates a client-side WhatsApp URL redirect for order confirmation.
 
-### Feature 1: Conversational Intent-Parsing Engine
-**What it is:** A chat interface where users declare their needs (e.g., "Gift for mom", "Goa trip") instead of searching for specific SKUs.
-- **Qualitative Value:** Reduces choice paralysis. Users often know the *occasion* but not the specific *item*. This bridges the gap between problem and solution.
-- **Quantitative Impact (Expected):** 
-  - **+30% Search-to-View Rate:** Users bypass zero-result search pages.
-  - **-40% Time to First Interaction:** Suggestion chips provide immediate one-click onboarding.
-
-### Feature 2: Semantic Multi-Item Bundling
-**What it is:** Instead of returning a list of isolated products, the assistant returns a cohesive "bundle" (e.g., Top + Bottom + Accessory) matched to the vibe.
-- **Qualitative Value:** Solves the "complete the look" problem natively. Feels like a premium, white-glove styling service.
-- **Quantitative Impact (Expected):**
-  - **+45% Average Order Value (AOV):** Users are incentivized to buy the whole outfit rather than a single piece.
-  - **+20% Units Per Transaction (UPT):** The "Add Entire Bundle to Cart" button removes friction from multi-item checkouts.
-
-### Feature 3: Stateful Memory & Iterative Refinement
-**What it is:** The AI remembers the context. If a user says "Add some shoes," the AI knows it's for the previously stated "Goa trip."
-- **Qualitative Value:** Mimics human conversation. Users don't have to repeat their constraints, drastically improving UX flow and emotional connection with the assistant.
-- **Quantitative Impact (Expected):**
-  - **+25% Session Length (Engaged Time):** Users are more likely to iterate on their bundle rather than bouncing when the first result isn't perfect.
-  - **+15% Add-to-Cart (ATC) Rate on Follow-ups.**
-
-### Feature 4: Dynamic Live Inventory (FakeStore API Integration)
-**What it is:** The catalog dynamically fetches real-time web data rather than relying entirely on a static, local database.
-- **Qualitative Value:** Ensures users only see in-stock, up-to-date products with accurate pricing and high-fidelity imagery.
-- **Quantitative Impact (Expected):**
-  - **-90% Out-of-Stock Checkout Errors:** Real-time fetching prevents dead ends.
-  - **+10% Conversion Rate:** Real images and robust descriptions build trust.
-
-### Feature 5: Quick-View Modal & Variant Selection
-**What it is:** A frictionless modal allowing users to read descriptions and select sizes without leaving the chat interface.
-- **Qualitative Value:** Keeps the user in the "discovery flow." Redirecting users to a new Product Detail Page (PDP) breaks the conversational context; the modal preserves it.
-- **Quantitative Impact (Expected):**
-  - **-15% Drop-off Rate at PDP:** Fewer page loads mean fewer abandoned sessions.
-  - **-20% Return Rate:** Enforcing explicit size selection reduces wrong-size orders.
-
-### Feature 6: WhatsApp Omnichannel Post-Purchase Flow
-**What it is:** Upon checkout, the user is redirected to WhatsApp with a pre-filled, highly detailed digital receipt.
-- **Qualitative Value:** Meets the user where they are. WhatsApp feels personal and secure, reinforcing post-purchase confidence.
-- **Quantitative Impact (Expected):**
-  - **+50% Open Rate on Receipts** compared to traditional email.
-  - **+10% Repeat Customer Rate:** Establishes a direct, conversational channel for future re-engagement.
+**Limitations of Prototype**:
+- Logic is entirely client-side, making it insecure and non-scalable.
+- Intent parsing is brittle (regex-based) and cannot handle nuanced or complex queries.
+- No real database; cart and session state are lost on refresh.
+- Fake checkout without actual payment processing.
 
 ---
 
-## 3. User Journey Analysis
+## 4. Product Requirements for v1.0 (Production)
 
-| Stage | User Action | Product Friction Removed | PM Insight |
-| :--- | :--- | :--- | :--- |
-| **1. Onboarding** | User clicks a suggestion chip ("Goa Trip"). | "Blank Canvas Syndrome" (not knowing what to type). | Suggestion chips act as training wheels for conversational UI. |
-| **2. Discovery** | AI returns a curated 3-item bundle. | Scrolling through 50 pages of irrelevant filters. | We shifted the burden of sorting from the User to the AI. |
-| **3. Evaluation** | User clicks "Quick View" to check sizing. | Loading a heavy PDP and losing chat context. | The modal keeps them anchored in the purchasing flow. |
-| **4. Checkout** | User clicks "Add Entire Bundle." | Manually adding 3 separate items. | 1-click bundle adds are massive conversion drivers. |
-| **5. Post-Purchase** | User receives WhatsApp confirmation. | Email fatigue / Spam folders. | High-visibility receipt builds instant trust. |
+### 4.1. Core Features & Capabilities
+
+#### A. True LLM Intent Engine
+- **Requirement**: Replace regex parsing with a cloud-hosted LLM (e.g., OpenAI GPT-4o-mini).
+- **Functionality**: The LLM must analyze user input to extract: `target_audience` (men/women/kids), `occasion/vibe` (casual, formal, beach), `budget` (if mentioned), and `specific_item_requests`.
+- **Multi-turn Context**: The engine must remember the current conversation state. If a user says "add matching shoes," the system must know the context of the previously suggested outfit.
+
+#### B. Intelligent Bundling System
+- **Requirement**: A backend algorithm that takes the LLM's parsed parameters and queries the database to form a "Bundle."
+- **Functionality**: A bundle should ideally consist of 2-4 complementary items (e.g., Top + Bottom + Accessory). The system must avoid suggesting conflicting items (e.g., two pairs of pants).
+
+#### C. Full-Stack Web Application
+- **Requirement**: Migrate the UI to a modern component-based framework.
+- **Functionality**: Server-side rendering for performance, responsive design for mobile and desktop, and a sleek, premium UI utilizing modern CSS/Tailwind.
+
+#### D. User Authentication & Persistence
+- **Requirement**: Secure user accounts and database storage.
+- **Functionality**: 
+  - Anonymous sessions that can be upgraded to authenticated accounts (Email/Password or OAuth).
+  - Persistent chat history and cart state across devices.
+
+#### E. Secure Checkout & Payments
+- **Requirement**: Real payment gateway integration.
+- **Functionality**: Replace the mock checkout with Stripe Checkout or a custom Stripe Elements form. Support for credit cards and digital wallets (Apple Pay/Google Pay).
+
+#### F. Automated Fulfillment Notifications
+- **Requirement**: Server-side communication for order confirmation.
+- **Functionality**: Instead of a client-side `window.open` for WhatsApp, integrate a backend service (like Twilio WhatsApp API or Resend for emails) to securely send order receipts upon successful payment webhooks.
 
 ---
 
-## 4. North Star Metrics & KPIs
+## 5. User Flows
 
-To measure the success of this product in a live environment, a PM should track:
-1. **Primary North Star:** **Incremental AOV (Average Order Value)** — Are users buying more items per session because of semantic bundling compared to traditional search?
-2. **Engagement Metric:** **Bundle Acceptance Rate** — What percentage of users click "Add Entire Bundle" vs single items?
-3. **Friction Metric:** **Chat-to-Cart Conversion Rate** — How many conversational turns does it take before an item is added to the cart? (Lower is better).
-4. **Retention Metric:** **Repeat Interaction Rate** — Do users return to the Assistant for their next purchase, or revert to the standard search bar?
+1. **Discovery & Onboarding**:
+   - User lands on the app. The AI sends a welcoming message with suggested prompt chips.
+2. **Intent Expression**:
+   - User types a request (e.g., "I need an outfit for a summer wedding").
+3. **Bundle Presentation**:
+   - AI displays a conversational response followed by a visually rich product bundle.
+4. **Refinement (Optional)**:
+   - User asks for modifications (e.g., "Do you have a different color shirt?"). AI updates the bundle.
+5. **Add to Cart**:
+   - User opens the Quick View, selects a size, and adds to cart, OR clicks "Add Entire Bundle to Cart."
+6. **Checkout**:
+   - User proceeds to checkout, enters shipping details, and processes payment securely.
+7. **Post-Purchase**:
+   - Success screen displayed. Backend automatically triggers an email/WhatsApp receipt.
 
 ---
 
-## 5. Strategic Moats & Recommendations for V2
+## 6. Technical Architecture & Stack
 
-**Current Strengths (Moats):**
-- **UX Familiarity:** Wrapped in Amazon's classic UI (`#232F3E` navy, `#FFD814` yellow buttons), reducing the learning curve for an entirely new paradigm.
-- **Frictionless Multi-item add:** The "Add Entire Bundle" button is a distinct competitive advantage over standard e-commerce carts.
+- **Frontend**: Next.js (React), standard CSS or TailwindCSS for styling.
+- **Backend/API**: Next.js API Routes / Netlify Serverless Functions.
+- **Database & Auth**: Supabase (PostgreSQL for catalog/orders/sessions, Supabase Auth for users).
+- **AI Engine**: OpenAI API (function calling/structured outputs for intent parsing).
+- **Payments**: Stripe API.
+- **Hosting**: Netlify or Vercel.
 
-**Roadmap for V2:**
-1. **True LLM Integration:** Replace the keyword intent parser with a live LLM (e.g., Anthropic Claude / OpenAI GPT-4) to handle complex edge cases (e.g., "I need an outfit for a summer wedding in Italy, but I hate the color blue.").
-2. **Vector Database:** Implement Pinecone or Weaviate to allow the AI to perform true semantic visual search across millions of SKUs rather than relying on manual tags.
-3. **User Taste Graph:** Introduce user authentication to save past purchases and chat history, allowing the AI to learn sizing, color preferences, and budget constraints over time.
+## 7. Future Enhancements (Post v1.0)
+- **Visual Search**: Allow users to upload a photo to find matching products.
+- **User Profiling**: Save user sizes, color preferences, and past purchases to tailor future recommendations automatically.
+- **Real Retailer Integration**: Connect to actual Amazon Affiliate API or Shopify storefront APIs to fetch live inventory and pricing.
